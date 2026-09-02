@@ -1,0 +1,30 @@
+# Serverless Job Configuration for match-incidents
+# Schedule: Every 15 minutes (*/15 * * * *)
+# Timeout: 5 minutes
+
+name: match-incidents
+schedule: '*/15 * * * *'
+timeout: 300  # 5 minutes
+
+runtime: python39
+handler: main.main
+
+environment:
+  INCIDENT_API_URL: http://incresponse.incre.prd.fr-par.internal.scaleway.com/core/incidents/
+  CONSOLE_API_URL: https://api.scaleway.com/resource-private/v1alpha1
+  # SCALEWAY_API_KEY: Set via Secret Manager
+  # DATABASE_URL: Set via Secret Manager
+
+secrets:
+  - key: SCALEWAY_API_KEY
+    name: alert-client-scaleway-key
+  - key: DATABASE_URL
+    name: alert-client-database-url
+
+# Note: The API key should have READ-ONLY permissions only
+# It should NOT have write/delete permissions on any Scaleway resources
+# Recommended IAM policy:
+# - resource: resource_private.v1alpha1.ConsoleApi
+#   permissions: [get]
+# - resource: organizations
+#   permissions: [read]
