@@ -1,10 +1,11 @@
 # Gestion des Organisations via CSV
 
-## 📄 Fichier CSV
+## Fichier CSV
 
-Au lieu d'avoir toutes les organisations en dur dans le code, vous pouvez gérer votre liste d'organisations via un fichier CSV.
+Au lieu d'avoir toutes les organisations en dur dans le code, gestion de la liste d'organisations via un fichier CSV.
 
 ### Emplacement
+
 ```
 /Users/cbenard/Desktop/Alert-client/database/organizations.csv
 ```
@@ -20,12 +21,18 @@ org_id,name
 
 ### Colonnes requises
 
-| Colonne | Type | Description |
-|---------|------|-------------|
-| `org_id` | UUID | L'ID de l'organisation Scaleway |
-| `name` | String | Nom affiché dans le dashboard |
 
-## 📥 Importer les organisations
+| Colonne  | Type   | Description                     |
+| -------- | ------ | ------------------------------- |
+| `org_id` | UUID   | L'ID de l'organisation Scaleway |
+| `name`   | String | Nom affiché dans le dashboard   |
+
+
+
+
+##  Importer les organisations
+
+
 
 ### Option 1: Script Python (recommandé)
 
@@ -39,11 +46,15 @@ nano organizations.csv
 python import_csv.py organizations.csv
 ```
 
+
+
 ### Option 2: Commande SQL COPY
 
 ```bash
 psql -d alert_client -c "COPY organizations(org_id, name) FROM '/Users/cbenard/Desktop/Alert-client/database/organizations.csv' CSV HEADER;"
 ```
+
+
 
 ### Option 3: Inserts SQL manuels
 
@@ -57,26 +68,40 @@ ON CONFLICT (org_id) DO NOTHING;
 ```
 
 Puis exécuter:
+
 ```bash
 psql -d alert_client -f database/seed_organizations.sql
 ```
 
-## 🔄 Mettre à jour la liste
+
+
+## Mettre à jour la liste
+
+
 
 ### Ajouter un client
+
 1. Ouvrir `database/organizations.csv`
 2. Ajouter une nouvelle ligne
 3. Exécuter: `python import_csv.py organizations.csv`
 
+
+
 ### Supprimer un client
+
 1. Ouvrir `database/organizations.csv`
 2. Supprimer la ligne
 3. Exécuter: `python import_csv.py organizations.csv` (le script fait TRUNCATE avant)
 
+
+
 ### Modifier un nom
+
 1. Ouvrir `database/organizations.csv`
 2. Modifier le nom
 3. Exécuter: `python import_csv.py organizations.csv`
+
+
 
 ## 📊 Vérifier les organisations
 
@@ -88,6 +113,8 @@ psql -d alert_client -c "SELECT * FROM organizations ORDER BY name;"
 python import_csv.py organizations.csv
 ```
 
+
+
 ## 🔐 Exemple de fichier CSV complet
 
 ```csv
@@ -98,6 +125,8 @@ c5f3a3a3-3333-3333-3333-333333333333,Entreprise Globale
 c5f4a4a4-4444-4444-4444-444444444444,Société Digitale
 c5f5a5a5-5555-5555-5555-555555555555,Service Cloud
 ```
+
+
 
 ## ⚙️ Utilisation dans le cron job
 
@@ -112,9 +141,12 @@ Le cron job lit automatiquement les organisations depuis la base de données. Ap
 # Pas besoin de redémarrer quoi que ce soit !
 ```
 
+
+
 ## 📝 Notes
 
 - Le script `import_csv.py` fait un TRUNCATE avant d'importer (remplace toute la liste)
 - Les alertes existantes sont conservées (clés étrangères avec CASCADE)
 - Vous pouvez avoir autant d'organisations que nécessaire dans le CSV
 - Le dashboard se met à jour automatiquement (refresh 1 min)
+
