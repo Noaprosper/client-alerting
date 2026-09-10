@@ -76,7 +76,7 @@ SCALEWAY_API_KEY=scw_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 # URLs des APIs
 INCIDENT_API_URL=https://incresponse.incre.prd.fr-par.internal.scaleway.com/core/incidents/
-CONSOLE_API_URL=https://api.scaleway.com/resource-private/v1alpha1
+CONSOLE_API_URL=https://api.scaleway.com/resource-private/v1alpha1/dashboard
 
 # Database
 DATABASE_URL=postgresql://user:password@localhost:5432/alert_client

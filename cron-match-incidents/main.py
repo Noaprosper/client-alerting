@@ -10,7 +10,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 INCIDENT_API_URL = os.getenv('INCIDENT_API_URL', 'https://incresponse.incre.prd.fr-par.internal.scaleway.com/core/incidents/')
-CONSOLE_API_URL = os.getenv('CONSOLE_API_URL', 'https://api.scaleway.com/resource-private/v1alpha1')
+CONSOLE_API_URL = os.getenv('CONSOLE_API_URL', 'https://api.scaleway.com/resource-private/v1alpha1/dashboard')
 SCALEWAY_API_KEY = os.getenv('SCALEWAY_API_KEY', '')
 DATABASE_URL = os.getenv('DATABASE_URL', '')
 REQUEST_TIMEOUT = 300
@@ -81,9 +81,9 @@ def get_organizations(conn):
 
 def call_api(org_id, ptypes, locality):
     """
-    Call Console API filtered-counters endpoint.
+    Call Console API dashboard endpoint.
     
-    API format: GET /resource-private/v1alpha1/filtered-counters
+    API format: GET /resource-private/v1alpha1/dashboard
     Params: 
       - organization_id (UUID)
       - products (repeated int enum from ResourceCount.Type)
@@ -110,7 +110,8 @@ def call_api(org_id, ptypes, locality):
         }
         
         logger.debug(f'Calling Console API: org={org_id}, products={ptypes}, locality={locality}')
-        r = requests.get(f'{CONSOLE_API_URL}/filtered-counters', headers={'X-Auth-Token': SCALEWAY_API_KEY}, params=params, timeout=30)
+        # CONSOLE_API_URL already includes /dashboard path
+        r = requests.get(CONSOLE_API_URL, headers={'X-Auth-Token': SCALEWAY_API_KEY}, params=params, timeout=30)
         r.raise_for_status()
         cnt = {}
         for c in r.json().get('counters', []):

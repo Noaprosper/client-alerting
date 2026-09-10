@@ -124,7 +124,7 @@ SCALEWAY_API_KEY=your_readonly_api_key
 INCIDENT_API_URL=https://incresponse.incre.prd.fr-par.internal.scaleway.com/core/incidents/
 
 # URL Console API
-CONSOLE_API_URL=https://api.scaleway.com/resource-private/v1alpha1
+CONSOLE_API_URL=https://api.scaleway.com/resource-private/v1alpha1/dashboard
 
 # Base de données
 DATABASE_URL=postgresql://user:password@localhost:5432/alert_client

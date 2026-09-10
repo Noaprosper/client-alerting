@@ -61,7 +61,7 @@ ZONE_TO_LOCALITY = {
 
 ### 2. API Console (`resource_private.v1alpha1`)
 
-**Endpoint**: `GET /resource-private/v1alpha1/filtered-counters`
+**Endpoint**: `GET /resource-private/v1alpha1/dashboard`
 
 **Paramètres**:
 - `organization_id` (UUID)
