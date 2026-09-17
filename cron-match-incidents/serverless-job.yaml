@@ -11,7 +11,7 @@ handler: main.main
 
 environment:
   INCIDENT_API_URL: https://incresponse.incre.prd.fr-par.internal.scaleway.com/core/incidents/
-  CONSOLE_API_URL: https://api.scaleway.com/resource-private/v1alpha1
+  CONSOLE_API_URL: https://api.scaleway.com/resource-private/v1alpha1/dashboard
   # SCALEWAY_API_KEY: Set via Secret Manager
   # DATABASE_URL: Set via Secret Manager
 

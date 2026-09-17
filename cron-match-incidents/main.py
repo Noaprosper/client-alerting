@@ -11,14 +11,17 @@ logger = logging.getLogger(__name__)
 
 INCIDENT_API_URL = os.getenv('INCIDENT_API_URL', 'https://incresponse.incre.prd.fr-par.internal.scaleway.com/core/incidents/')
 CONSOLE_API_URL = os.getenv('CONSOLE_API_URL', 'https://api.scaleway.com/resource-private/v1alpha1/dashboard')
+# Normalize so the cron works whether CONSOLE_API_URL includes /dashboard or not.
+if not CONSOLE_API_URL.endswith('/dashboard'):
+    CONSOLE_API_URL = CONSOLE_API_URL.rstrip('/') + '/dashboard'
 SCALEWAY_API_KEY = os.getenv('SCALEWAY_API_KEY', '')
 DATABASE_URL = os.getenv('DATABASE_URL', '')
 REQUEST_TIMEOUT = 300
 
 TEAM_TO_RESOURCE_TYPES = {'compute': [1, 2, 84, 85, 91, 87], 'network': [14, 48, 49, 50, 61, 88, 77, 75, 74, 78, 79, 80, 81, 82, 83, 13, 16], 'storage': [58, 62, 59, 64, 66, 67, 3, 55, 43, 44, 45], 'database': [5, 52, 53, 19, 57, 70, 71, 72, 92], 'container': [7, 17, 32, 6, 31], 'load_balancer': [4, 51], 'serverless': [10, 18, 33, 60, 63], 'monitoring': [68, 89, 24, 25, 26], 'iam': [36, 37, 38, 39, 40, 41, 42, 27, 28, 29, 30, 76, 34, 35], 'messaging': [21, 73, 20], 'webhosting': [22], 'internal-services': [11, 15, 90, 65, 86], 'sre': [1, 7, 4, 3], 'platform': [1, 46, 47, 54], 'dedibox': [16, 22], 'shared-hosting-paas': [22, 17], 'object-storage': [3, 55], 'cloud-compute': [1, 8, 12], 'hardware': [8, 16], 'billing': [1, 3], 'user-accounts': [38, 36]}
 TEAM_TO_PRODUCT_TYPES = {'compute': [1], 'network': [13, 14, 15, 24, 30, 36], 'storage': [3, 5, 26, 32], 'database': [7, 18, 27, 34, 35, 41], 'container': [2, 6, 16], 'load_balancer': [3], 'serverless': [17, 18, 28, 29], 'monitoring': [21], 'iam': [9, 22, 23], 'messaging': [20, 39], 'webhosting': [25], 'sre': [1, 2, 3, 5], 'platform': [1, 9], 'dedibox': [15, 25], 'object-storage': [5], 'cloud-compute': [1, 4, 8], 'hardware': [8, 15], 'billing': [1, 3], 'user-accounts': [38, 36], 'internal-services': [11, 15]}
-ZONE_TO_LOCALITY = {'fr-par-1': 1, 'fr-par-2': 1, 'nl-ams-1': 1, 'pl-waw-1': 1, 'PAR1': 1, 'PAR-1': 1, 'fr-par': 1, 'PAR': 1, 'DC2': 1, 'DC3': 1, 'DC5': 1, 'AMS1': 1, 'nl-ams': 1, 'AMS': 1, 'WAW1': 1, 'pl-waw': 1, 'WAW': 1, 'global': 'global'}
-ZONE_PATTERNS = [r'\b(PAR1|PAR-1|fr-par-1)\b', r'\b(PAR2|PAR-2|fr-par-2)\b', r'\b(AMS1|nl-ams-1)\b', r'\b(WAW1|pl-waw-1)\b', r'\b(DC2|DC3|DC5)\b', r'\b(fr-par|nl-ams|pl-waw)\b', r'\b(PAR|AMS|WAW)\b']
+ZONE_TO_LOCALITY = {'global': 'global', 'FR-PAR': 1, 'FR-PAR-1': 1, 'FR-PAR-2': 1, 'FR-PAR-3': 1, 'IT-MIL': 1, 'IT-MIL-1': 1, 'IT-MIL-2': 1, 'IT-MIL-3': 1, 'ITX4': 1, 'NL-AMS': 1, 'NL-AMS-1': 1, 'NL-AMS-2': 1, 'NL-AMS-3': 1, 'PL-WAW': 1, 'PL-WAW-1': 1, 'PL-WAW-2': 1, 'PL-WAW-3': 1, 'PAR': 1, 'PAR1': 1, 'PAR-1': 1, 'PAR2': 1, 'PAR-2': 1, 'PAR3': 1, 'PAR-3': 1, 'DC2': 1, 'DC3': 1, 'DC5': 1, 'AMS': 1, 'AMS1': 1, 'AMS2': 1, 'AMS3': 1, 'WAW': 1, 'WAW1': 1, 'WAW2': 1, 'WAW3': 1, 'fr-par-1': 1, 'fr-par-2': 1, 'nl-ams-1': 1, 'pl-waw-1': 1}
+ZONE_PATTERNS = [r'\b(PAR1|PAR-1|fr-par-1|FR-PAR-1)\b', r'\b(PAR2|PAR-2|fr-par-2|FR-PAR-2)\b', r'\b(PAR3|PAR-3|fr-par-3|FR-PAR-3)\b', r'\b(DC2|DC3|DC5)\b', r'\b(AMS1|AMS-1|nl-ams-1|NL-AMS-1)\b', r'\b(AMS2|AMS-2|nl-ams-2|NL-AMS-2)\b', r'\b(AMS3|AMS-3|nl-ams-3|NL-AMS-3)\b', r'\b(WAW1|WAW-1|pl-waw-1|PL-WAW-1)\b', r'\b(WAW2|WAW-2|pl-waw-2|PL-WAW-2)\b', r'\b(WAW3|WAW-3|pl-waw-3|PL-WAW-3)\b', r'\b(IT-MIL1|IT-MIL-1)\b', r'\b(IT-MIL2|IT-MIL-2)\b', r'\b(IT-MIL3|IT-MIL-3)\b', r'\b(ITX4)\b', r'\b(fr-par)(?!-[0-9])\b', r'\b(it-mil)(?!-[0-9])\b', r'\b(nl-ams)(?!-[0-9])\b', r'\b(pl-waw)(?!-[0-9])\b', r'\b(PAR|AMS|WAW)\b']
 
 @dataclass
 class Incident:
@@ -34,10 +37,23 @@ def get_db_connection():
 
 def extract_zones_from_text(text):
     if not text: return []
-    zones = set()
+    zones = []
     for p in ZONE_PATTERNS:
-        for m in re.findall(p, text.upper(), re.IGNORECASE): zones.add(m.upper())
-    return list(zones)
+        for m in re.findall(p, text.upper(), re.IGNORECASE): zones.append(m.upper())
+    # Prefer the specific zone over the bare region of the same region (fr-par-1 > fr-par)
+    region_aliases = {'PAR': 'FR-PAR', 'AMS': 'NL-AMS', 'WAW': 'PL-WAW'}
+    specific, bare = set(), set()
+    for z in zones:
+        parts = z.split('-')
+        if len(parts) == 3 and parts[2].isdigit():
+            specific.add(z)
+        else:
+            bare.add(z)
+    for b in list(bare):
+        r = b.rsplit('-', 1)[0] if b.count('-') == 1 else region_aliases.get(b)
+        if r and any(s.startswith(r + '-') for s in specific):
+            bare.discard(b)
+    return sorted(specific | bare)
 
 def zones_to_localities(zones):
     """
