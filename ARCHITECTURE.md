@@ -9,8 +9,8 @@ Système de surveillance des incidents qui corrèle les incidents ouverts avec l
 ```
 ┌─────────────────┐     ┌──────────────────────┐     ┌─────────────────┐
 │  Incident API   │────▶│  match-incidents     │────▶│  PostgreSQL DB  │
-│  (Django REST)  │     │  (cron */15 * * * *) │     │  (4 tables + 1  │
-└─────────────────┘     └──────────────────────┘     │     vue)        │
+│  (Django REST)  │     │  (cron */15 * * * *) │     │  (4 tables + 2  │
+└─────────────────┘     └──────────────────────┘     │     vues)       │
                                                       └────────┬────────┘
 ┌─────────────────┐                                          │
 │  Console API    │──────────────────────────────────────────┤
@@ -154,9 +154,10 @@ python import_csv.py organizations.csv
 
 Le script:
 1. Lit le fichier CSV
-2. Fait un TRUNCATE de la table `organizations`
-3. Importe toutes les lignes du CSV
-4. Les alertes existantes sont conservées (FK avec CASCADE)
+2. Importe/met à jour toutes les lignes du CSV (upsert)
+3. Supprime les organisations qui ne sont plus dans le CSV
+   (ON DELETE CASCADE nettoie leurs alertes)
+4. Les alertes des organisations maintenues dans la liste sont conservées
 
 ### Mise à jour
 

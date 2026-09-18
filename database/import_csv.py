@@ -24,13 +24,10 @@ def import_organizations(csv_path='organizations.csv'):
         conn = psycopg2.connect(DATABASE_URL)
         cur = conn.cursor()
         
-        # Vider la table organizations
-        print("🗑️  Nettoyage de la table organizations...")
-        cur.execute("TRUNCATE TABLE organizations RESTART IDENTITY CASCADE")
-        
         # Lire et importer le CSV
         print(f"📄 Lecture du fichier {csv_path}...")
         
+        org_ids = []
         with open(csv_path, 'r', encoding='utf-8') as f:
             reader = csv.DictReader(f)
             count = 0
@@ -43,6 +40,7 @@ def import_organizations(csv_path='organizations.csv'):
                     print(f"⚠️  Ligne ignorée (org_id vide): {row}")
                     continue
                 
+                org_ids.append(org_id)
                 # Insérer ou mettre à jour
                 cur.execute("""
                     INSERT INTO organizations (org_id, name)
@@ -54,6 +52,13 @@ def import_organizations(csv_path='organizations.csv'):
                 
                 count += 1
                 print(f"  ✅ {name} ({org_id})")
+        
+        # Synchronisation : supprimer les organisations qui ne sont plus dans le CSV.
+        # ON DELETE CASCADE nettoie leurs alertes ; les alertes des organisations
+        # conservées dans la liste sont préservées (pas de TRUNCATE).
+        if org_ids:
+            placeholders = ','.join(cur.mogrify('%s', (oid,)).decode() for oid in org_ids)
+            cur.execute(f"DELETE FROM organizations WHERE org_id NOT IN ({placeholders})")
         
         conn.commit()
         print(f"\n✅ {count} organisations importées avec succès !")
