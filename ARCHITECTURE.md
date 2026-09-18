@@ -14,8 +14,8 @@ Système de surveillance des incidents qui corrèle les incidents ouverts avec l
                                                       └────────┬────────┘
 ┌─────────────────┐                                          │
 │  Console API    │──────────────────────────────────────────┤
-│  (GetFiltered   │                                          │
-│   Counters)     │◀─────────────────────────────────────────┤
+│  GetDashboard   │                                          │
+│                 │◀─────────────────────────────────────────┤
 └─────────────────┘                                          │
                                                       ┌────────▼────────┐
                                                       │   Dashboard     │
@@ -33,54 +33,54 @@ Système de surveillance des incidents qui corrèle les incidents ouverts avec l
 **Étapes**:
 1. Fetch incidents ouverts (`is_closed=false`) depuis Incident API
 2. Charger les organisations depuis la DB (importées via CSV)
-3. Pour chaque incident:
-   - Mapper `team` → `ResourceCount.Type`
+3. Pour chaque organisation (depuis CSV):
+   - Appeler `GetDashboard(org_id)` **une seule fois** (matrice complète `resource_counts`)
+4. Pour chaque incident:
+   - Mapper `team` → noms de `ResourceCount.Type`
    - Mapper `zone` → `Locality`
-4. Pour chaque organisation (depuis CSV):
-   - Appeler `GetFilteredCounters(org_id, products, localities)`
-   - Si count > 0 pour un type+localité → créer Alert
+   - Matcher en mémoire: créer Alert si un type de la team a count > 0 dans l'org
 5. Déduplication via contrainte UNIQUE(incident_id, org_id)
 
 **Clés de mapping**:
 
 ```python
 TEAM_TO_RESOURCE_TYPES = {
-    'compute': [1, 2, 84, 85],      # instance, gpu, volumes
-    'network': [14, 48, 49, 50],    # gateway, ip, vpc
-    'database': [5, 19, 70],        # rdb, redis, mongodb
+    'compute': [1, 2, 84, 85],      # ids ResourceCount.Type
+    'network': [14, 48, 49, 50],    # ids ResourceCount.Type
+    'database': [5, 19, 70],        # ids ResourceCount.Type
     # ... voir main.py pour la liste complète
 }
 
-ZONE_TO_LOCALITY = {
-    'fr-par-1': [1],
-    'fr-par-2': [2],
-    'nl-ams-1': [3],
-    'pl-waw-1': [4],
-}
+# Le matching GetDashboard se fait sur les NOMS des types :
+# main.py derive TEAM_TO_RESOURCE_TYPE_NAMES via TYPE_ID_TO_NAME
+# (ex: 7 -> 'kubernetes', 4 -> 'load_balancer', 5 -> 'relational_database')
 ```
 
-### 2. API Console (`resource_private.v1alpha1`)
+### 2. API Console (`resource_private.v1alpha1.ConsoleApi.GetDashboard`)
 
 **Endpoint**: `GET /resource-private/v1alpha1/dashboard`
 
-**Paramètres**:
-- `organization_id` (UUID)
-- `products` (ProductType[]) - ex: [1, 3, 7] pour instance, lb, rdb
-- `localities` (Locality[]) - ex: [1, 2] pour fr-par-1, fr-par-2
+Ce RPC retourne la matrice complète type × zone pour une organisation
+(tous les produits) — c'est l'API utilisée par la console. Le code l'appelle
+**une seule fois par organisation**, puis fait le matching en mémoire.
+
+**Paramètres** (GetDashboard ne prend PAS `products`/`localities`):
+- `organization_id` (UUID) — ou `project_id`
 - `strategy` (DataSourceStrategy) - 1=mixed
 
-**Réponse**:
+**Réponse** (`Dashboard.resource_counts`, types rendus par **nom** d'enum):
+
 ```json
 {
-  "counters": [
-    {
-      "type": 1,
-      "values": {"fr-par-1": 5, "fr-par-2": 3},
-      "unit": 0
-    }
+  "resource_counts": [
+    {"type": "kubernetes", "values": {"fr-par": 2, "it-mil": 0, "nl-ams": 0, "pl-waw": 0}, "unit": "none", "warning": "no_warning", "has_error": false, "prevent_delete": true},
+    {"type": "load_balancer", "values": {"fr-par-1": 2, "fr-par-2": 1}, "unit": "none", "warning": "no_warning", "has_error": false, "prevent_delete": true}
   ]
 }
 ```
+
+⚠️ `GetFilteredCounters` (`/resource-private/v1alpha1/filtered-counters`) est un
+RPC distinct qui exige `products` + `localities` (min 1 chacun) — non utilisé ici.
 
 ### 3. Base de données (PostgreSQL)
 
@@ -213,11 +213,11 @@ Incident #123:
   impacted_zones: ["fr-par-1"]
 
 Organization "Client A":
-  GetFilteredCounters(org_id, [7, 18, 27], [1])
-  → counters: {7: 5, 19: 2}
+  GetDashboard(org_id)
+  → resource_counts: {"kubernetes": {"fr-par": 2}, "relational_database": {...}, ...}
 
 Résultat:
-  → Alerte créée (Client A a 5 RDB en fr-par-1)
+  → Alerte créée si un type de la team "database" a count > 0 chez Client A
 ```
 
 ## Monitoring
